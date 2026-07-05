@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi_users import models
-from fastapi_users.exceptions import InvalidPasswordException, UserAlreadyExists
+from fastapi_users.exceptions import (
+    InvalidPasswordException,
+    UserAlreadyExists,
+)
 from fastapi_users.router.common import ErrorCode, ErrorModel
 from fastapi_users.manager import BaseUserManager
 
@@ -29,16 +32,22 @@ def get_register_router(
                             ErrorCode.REGISTER_USER_ALREADY_EXISTS: {
                                 "summary": "A user with this email already exists.",
                                 "value": {
-                                    "detail": ErrorCode.REGISTER_USER_ALREADY_EXISTS
+                                    "detail": (
+                                        ErrorCode.REGISTER_USER_ALREADY_EXISTS
+                                    )
                                 },
                             },
                             ErrorCode.REGISTER_INVALID_PASSWORD: {
                                 "summary": "Password validation failed.",
                                 "value": {
                                     "detail": {
-                                        "code": ErrorCode.REGISTER_INVALID_PASSWORD,
-                                        "reason": "Password should be at least 3"
-                                        " characters",
+                                        "code": (
+                                            ErrorCode.REGISTER_INVALID_PASSWORD
+                                        ),
+                                        "reason": (
+                                            "Password should be at least 3"
+                                            " characters"
+                                        ),
                                     }
                                 },
                             },
