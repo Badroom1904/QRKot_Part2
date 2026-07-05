@@ -37,7 +37,8 @@ def get_register_router(
                                 "value": {
                                     "detail": {
                                         "code": ErrorCode.REGISTER_INVALID_PASSWORD,
-                                        "reason": "Password should be at least 3 characters",
+                                        "reason": "Password should be at least 3"
+                                        " characters",
                                     }
                                 },
                             },
@@ -50,7 +51,9 @@ def get_register_router(
     async def register(
         request: Request,
         user_create: user_create_schema,
-        user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
+        user_manager: BaseUserManager[
+            models.UP, models.ID
+        ] = Depends(get_user_manager),
     ):
         try:
             created_user = await user_manager.create(
