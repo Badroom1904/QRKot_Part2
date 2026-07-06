@@ -10,8 +10,7 @@ async def invest_donations_to_projects(
     session: AsyncSession,
     donation: Donation
 ) -> None:
-    """
-    Распределяет пожертвование по открытым проектам.
+    """Распределяет пожертвование по открытым проектам.
 
     Алгоритм:
     1. Находит все открытые проекты (fully_invested=False),
@@ -24,7 +23,7 @@ async def invest_donations_to_projects(
         session: Асинхронная сессия SQLAlchemy
         donation: Объект пожертвования для распределения
     """
-    
+
     open_projects = await charity_project_crud.get_open_projects(session)
 
     if not open_projects:
@@ -73,8 +72,7 @@ async def invest_free_donations_to_project(
     session: AsyncSession,
     project: CharityProject
 ) -> None:
-    """
-    Распределяет свободные пожертвования в новый проект.
+    """Распределяет свободные пожертвования в новый проект.
 
     Алгоритм:
     1. Находит все пожертвования с нераспределёнными средствами

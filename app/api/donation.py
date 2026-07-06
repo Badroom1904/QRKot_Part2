@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_async_session
 from app.core.dependencies import current_user, current_superuser
-from app.models import Donation, User
+from app.models import User
 from app.schemas import (
     DonationCreate,
     DonationDB,
