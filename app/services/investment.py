@@ -1,9 +1,9 @@
 from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.models import CharityProject, Donation
+from app.crud import charity_project_crud, donation_crud
 
 
 async def invest_donations_to_projects(
@@ -24,12 +24,8 @@ async def invest_donations_to_projects(
         session: Асинхронная сессия SQLAlchemy
         donation: Объект пожертвования для распределения
     """
-    query = select(CharityProject).where(
-        CharityProject.fully_invested.is_(False)
-    ).order_by(CharityProject.create_date.asc())
-
-    result = await session.execute(query)
-    open_projects = result.scalars().all()
+    
+    open_projects = await charity_project_crud.get_open_projects(session)
 
     if not open_projects:
         return
@@ -55,10 +51,12 @@ async def invest_donations_to_projects(
         else:
             invest_amount = remaining_amount
             project.invested_amount = (
-                project.invested_amount or 0) + invest_amount
+                project.invested_amount or 0
+            ) + invest_amount
 
         donation.invested_amount = (
-            donation.invested_amount or 0) + invest_amount
+            donation.invested_amount or 0
+        ) + invest_amount
         remaining_amount -= invest_amount
 
         if donation.invested_amount >= donation.full_amount:
@@ -89,12 +87,8 @@ async def invest_free_donations_to_project(
         session: Асинхронная сессия SQLAlchemy
         project: Объект проекта для инвестирования
     """
-    query = select(Donation).where(
-        Donation.fully_invested.is_(False)
-    ).order_by(Donation.create_date.asc())
 
-    result = await session.execute(query)
-    open_donations = result.scalars().all()
+    open_donations = await donation_crud.get_open_donations(session)
 
     if not open_donations:
         return
@@ -106,6 +100,7 @@ async def invest_free_donations_to_project(
         return
 
     for donation in open_donations:
+
         donation_invested = donation.invested_amount or 0
         remaining_donation_amount = donation.full_amount - donation_invested
 
@@ -120,10 +115,12 @@ async def invest_free_donations_to_project(
         else:
             invest_amount = remaining_donation_amount
             project.invested_amount = (
-                project.invested_amount or 0) + invest_amount
+                project.invested_amount or 0
+            ) + invest_amount
 
         donation.invested_amount = (
-            donation.invested_amount or 0) + invest_amount
+            donation.invested_amount or 0
+        ) + invest_amount
         needed_amount -= invest_amount
 
         if donation.invested_amount >= donation.full_amount:

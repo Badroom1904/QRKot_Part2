@@ -5,7 +5,7 @@ from app.core.config import settings
 from app.core.auth import auth_backend, fastapi_users
 from app.core.register_router import get_register_router
 from app.core.user_manager import get_user_manager
-from app.api import charity_project_router, donation_router
+from app.api import router as api_router
 from app.schemas.user import UserRead, UserCreate, UserUpdate
 
 app = FastAPI(
@@ -42,17 +42,7 @@ app.include_router(
     tags=["users"],
 )
 
-app.include_router(
-    charity_project_router,
-    prefix="/charity_project",
-    tags=["Целевые проекты"],
-)
-
-app.include_router(
-    donation_router,
-    prefix="/donation",
-    tags=["Пожертвования"],
-)
+app.include_router(api_router)
 
 app.add_middleware(
     CORSMiddleware,

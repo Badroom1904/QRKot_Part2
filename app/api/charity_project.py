@@ -3,7 +3,6 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.core.db import get_async_session
 from app.core.dependencies import current_superuser
@@ -14,6 +13,7 @@ from app.schemas import (
     CharityProjectDB,
 )
 from app.services import invest_free_donations_to_project
+from app.crud import charity_project_crud
 
 router = APIRouter()
 
@@ -23,16 +23,13 @@ router = APIRouter()
     response_model=List[CharityProjectDB],
     response_model_exclude_none=True,
     summary="Получить список всех проектов",
-    description="Возвращает список всех целевых проектов в Фонде. "
-                "Доступно всем пользователям.",
+    description="Возвращает список всех целевых проектов в Фонде.",
 )
 async def get_all_projects(
     session: AsyncSession = Depends(get_async_session),
 ) -> List[CharityProjectDB]:
     """Получить все проекты (доступно всем)."""
-    query = select(CharityProject).order_by(CharityProject.create_date.asc())
-    result = await session.execute(query)
-    return result.scalars().all()
+    return await charity_project_crud.get_all(session)
 
 
 @router.post(
@@ -42,8 +39,7 @@ async def get_all_projects(
     status_code=status.HTTP_200_OK,
     summary="Создать новый проект",
     description="Создаёт новый целевой проект и автоматически распределяет "
-                "в него все свободные пожертвования. "
-                "Доступно только суперпользователям.",
+                "в него все свободные пожертвования.",
 )
 async def create_project(
     project_in: CharityProjectCreate,
@@ -51,11 +47,9 @@ async def create_project(
     user: User = Depends(current_superuser),
 ) -> CharityProjectDB:
     """Создать новый проект (только для суперпользователей)."""
-    query = select(CharityProject).where(
-        CharityProject.name == project_in.name
+    existing_project = await charity_project_crud.get_by_name(
+        project_in.name, session
     )
-    result = await session.execute(query)
-    existing_project = result.scalar_one_or_none()
 
     if existing_project:
         raise HTTPException(
@@ -63,8 +57,9 @@ async def create_project(
             detail="Проект с таким названием уже существует",
         )
 
-    new_project = CharityProject(**project_in.dict())
-    session.add(new_project)
+    new_project = await charity_project_crud.create(
+        project_in, session
+    )
 
     await invest_free_donations_to_project(session, new_project)
 
@@ -79,8 +74,7 @@ async def create_project(
     response_model=CharityProjectDB,
     response_model_exclude_none=True,
     summary="Обновить проект",
-    description="Обновляет данные существующего проекта. "
-                "Доступно только суперпользователям.",
+    description="Обновляет данные существующего проекта.",
 )
 async def update_project(
     project_id: int,
@@ -89,9 +83,7 @@ async def update_project(
     user: User = Depends(current_superuser),
 ) -> CharityProjectDB:
     """Обновить проект (только для суперпользователей)."""
-    query = select(CharityProject).where(CharityProject.id == project_id)
-    result = await session.execute(query)
-    project = result.scalar_one_or_none()
+    project = await charity_project_crud.get(project_id, session)
 
     if not project:
         raise HTTPException(
@@ -106,12 +98,9 @@ async def update_project(
         )
 
     if project_in.name is not None:
-        query = select(CharityProject).where(
-            CharityProject.name == project_in.name,
-            CharityProject.id != project_id
+        existing_project = await charity_project_crud.get_by_name_excluding_id(
+            project_in.name, project_id, session
         )
-        result = await session.execute(query)
-        existing_project = result.scalar_one_or_none()
 
         if existing_project:
             raise HTTPException(
@@ -130,23 +119,18 @@ async def update_project(
             project.fully_invested = True
             project.close_date = datetime.now()
 
-    update_data = project_in.dict(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(project, field, value)
+    updated_project = await charity_project_crud.update(
+        project, project_in, session
+    )
 
-    await session.commit()
-    await session.refresh(project)
-
-    return project
+    return updated_project
 
 
 @router.delete(
     "/{project_id}",
     response_model=CharityProjectDB,
     summary="Удалить проект",
-    description="Удаляет существующий проект из базы данных. "
-                "Доступно только суперпользователям. "
-                "Нельзя удалить проект, в который уже инвестировали.",
+    description="Удаляет существующий проект из базы данных.",
 )
 async def delete_project(
     project_id: int,
@@ -154,14 +138,18 @@ async def delete_project(
     user: User = Depends(current_superuser),
 ) -> CharityProjectDB:
     """Удалить проект (только для суперпользователей)."""
-    query = select(CharityProject).where(CharityProject.id == project_id)
-    result = await session.execute(query)
-    project = result.scalar_one_or_none()
+    project = await charity_project_crud.get(project_id, session)
 
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Проект не найден",
+        )
+
+    if project.fully_invested:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Нельзя удалить закрытый проект",
         )
 
     if project.invested_amount > 0:
@@ -170,7 +158,4 @@ async def delete_project(
             detail="Нельзя удалить проект, в который уже инвестировали",
         )
 
-    await session.delete(project)
-    await session.commit()
-
-    return project
+    return await charity_project_crud.delete(project, session)
