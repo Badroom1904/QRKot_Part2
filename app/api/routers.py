@@ -1,11 +1,11 @@
 """Модуль для объявления всех роутеров API."""
 
-from app.api.charity_project import router as charity_project_router
-from app.api.donation import router as donation_router
 from fastapi import APIRouter
 
-router = APIRouter()
+from app.api.charity_project import router as charity_project_router
+from app.api.donation import router as donation_router
 
+router = APIRouter()
 
 router.include_router(
     charity_project_router,

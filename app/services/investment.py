@@ -23,7 +23,6 @@ async def invest_donations_to_projects(
         session: Асинхронная сессия SQLAlchemy
         donation: Объект пожертвования для распределения
     """
-
     open_projects = await charity_project_crud.get_open_projects(session)
 
     if not open_projects:
@@ -85,7 +84,6 @@ async def invest_free_donations_to_project(
         session: Асинхронная сессия SQLAlchemy
         project: Объект проекта для инвестирования
     """
-
     open_donations = await donation_crud.get_open_donations(session)
 
     if not open_donations:
@@ -98,7 +96,6 @@ async def invest_free_donations_to_project(
         return
 
     for donation in open_donations:
-
         donation_invested = donation.invested_amount or 0
         remaining_donation_amount = donation.full_amount - donation_invested
 
