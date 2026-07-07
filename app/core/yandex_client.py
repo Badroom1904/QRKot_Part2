@@ -1,9 +1,8 @@
 import httpx
 from fastapi import HTTPException, status
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, AsyncGenerator
 
 from app.core.config import settings
-
 
 class YandexDiskClient:
     """Клиент для работы с API Яндекс Диска."""
@@ -216,20 +215,16 @@ class YandexDiskClient:
         return public_url
 
 
-def get_yandex_client() -> YandexDiskClient:
+async def get_yandex_client() -> AsyncGenerator[YandexDiskClient, None]:
     """
     Dependency для получения клиента Яндекс Диска.
-
-    Returns:
-        YandexDiskClient: Клиент Яндекс Диска
-
-    Raises:
-        HTTPException: Если токен не настроен (503)
+    Асинхронный генератор для управления сессией.
     """
-    token = settings.YANDEX_DISK_TOKEN
+    token = settings.YANDEX_DISK_TOKEN  # Пока оставляем как есть
     if not token:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Yandex Disk token not configured",
         )
-    return YandexDiskClient(token)
+    async with YandexDiskClient(token) as client:
+        yield client
