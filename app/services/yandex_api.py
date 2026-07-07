@@ -83,7 +83,8 @@ async def create_simple_report(
 
     worksheet = workbook.add_worksheet("Отчёт")
 
-    worksheet.merge_range('A1:C1', f'Отчёт о проектах от {filename}', header_format)
+    worksheet.merge_range(
+        'A1:C1', f'Отчёт о проектах от {filename}', header_format)
 
     headers = ['Название проекта', 'Время сбора', 'Описание']
     for col, header in enumerate(headers):

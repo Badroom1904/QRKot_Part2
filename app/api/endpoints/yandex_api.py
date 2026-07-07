@@ -1,12 +1,10 @@
-from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.core.db import get_async_session
 from app.core.dependencies import current_superuser
-from app.core.yandex_client import get_yandex_client, YandexDiskClient
-from app.models import CharityProject, User
+from app.core.yandex_client import get_yandex_client
+from app.models import User
 from app.services.yandex_api import create_simple_report
 from app.crud import charity_project_crud
 
@@ -31,7 +29,6 @@ async def create_report(
     Returns:
         str: Публичная ссылка на файл на Яндекс Диске
     """
-    # Получаем закрытые проекты
     closed_projects = await charity_project_crud.get_closed_projects(
         session
     )
@@ -42,7 +39,6 @@ async def create_report(
             detail="No closed projects found for report",
         )
 
-    # Формируем имя файла
     from datetime import datetime
     from app.core.config import settings
 
@@ -50,7 +46,6 @@ async def create_report(
     filename = f"report_{timestamp}.xlsx"
 
     try:
-        # Используем клиент Яндекс Диска через контекстный менеджер
         yandex_client = get_yandex_client()
         async with yandex_client as client:
             public_url = await create_simple_report(
