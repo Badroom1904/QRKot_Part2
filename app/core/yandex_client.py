@@ -4,6 +4,7 @@ from typing import Optional, Dict, Any, AsyncGenerator
 
 from app.core.config import settings
 
+
 class YandexDiskClient:
     """Клиент для работы с API Яндекс Диска."""
 
