@@ -3,6 +3,7 @@ from typing import Optional
 from fastapi import Depends
 from fastapi_users import BaseUserManager, IntegerIDMixin, models
 from fastapi_users.exceptions import InvalidPasswordException
+from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 
 from app.models import User
 from app.core.config import settings
@@ -20,8 +21,7 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
         password: str,
         user: Optional[models.UP] = None,
     ) -> None:
-        """
-        Валидация пароля.
+        """Валидация пароля.
 
         Минимальная длина - 3 символа (как требует тест).
         """
@@ -33,7 +33,7 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
 
 
 async def get_user_manager(
-    user_db=Depends(get_user_db),
-):
+    user_db: SQLAlchemyUserDatabase = Depends(get_user_db),
+) -> UserManager:
     """Получение менеджера пользователей."""
-    yield UserManager(user_db)
+    return UserManager(user_db)
