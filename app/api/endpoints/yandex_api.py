@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_async_session
 from app.core.dependencies import current_superuser
-from app.core.yandex_client import get_yandex_client
+from app.core.yandex_client import get_yandex_client, YandexDiskClient
 from app.models import User
 from app.services.yandex_api import create_simple_report
 from app.crud import charity_project_crud
@@ -21,7 +21,8 @@ router = APIRouter()
 )
 async def create_report(
     session: AsyncSession = Depends(get_async_session),
-    user: User = Depends(current_superuser),
+    _: User = Depends(current_superuser),
+    yandex_client: YandexDiskClient = Depends(get_yandex_client),
 ) -> str:
     """
     Создаёт Excel-отчёт о закрытых проектах.
@@ -39,20 +40,11 @@ async def create_report(
             detail="No closed projects found for report",
         )
 
-    from datetime import datetime
-    from app.core.config import settings
-
-    timestamp = datetime.now().strftime(settings.REPORT_FORMAT)
-    filename = f"report_{timestamp}.xlsx"
-
     try:
-        yandex_client = get_yandex_client()
-        async with yandex_client as client:
-            public_url = await create_simple_report(
-                client,
-                filename,
-                closed_projects,
-            )
+        public_url = await create_simple_report(
+            yandex_client,
+            closed_projects,
+        )
         return public_url
     except HTTPException:
         raise

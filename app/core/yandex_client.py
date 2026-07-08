@@ -221,7 +221,7 @@ async def get_yandex_client() -> AsyncGenerator[YandexDiskClient, None]:
     Dependency для получения клиента Яндекс Диска.
     Асинхронный генератор для управления сессией.
     """
-    token = settings.YANDEX_DISK_TOKEN  # Пока оставляем как есть
+    token = settings.yandex_disk_token
     if not token:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

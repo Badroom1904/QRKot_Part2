@@ -49,15 +49,27 @@ venv\Scripts\activate
  # для Linux/MacOS
 source venv/bin/activate
 
+
 3.Установите зависимости:
 pip install -r requirements.txt
 
-4.Примените миграции базы данных:
+4.Создайте файл .env:
+
+DATABASE_URL=sqlite+aiosqlite:///./fastapi.db
+
+SECRET_KEY=your-secret-key-here-change-in-production
+
+DEBUG=True
+
+YANDEX_DISK_TOKEN=your_yandex_disk_token_here
+REPORT_FORMAT=%Y-%m-%d_%H-%M
+
+5.Примените миграции базы данных:
 alembic upgrade head
 
-5.Запустите приложение:
+6.Запустите приложение:
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000\
 
-6.Откройте документацию:
+7.Откройте документацию:
 Swagger UI: http://localhost:8000/docs
 ReDoc: http://localhost:8000/redoc
